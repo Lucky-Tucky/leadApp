@@ -40,6 +40,33 @@ router.get("/", async (req, res) => {
     }
 })
 
+router.get("/stats", async (req, res) => {
+    try {
+        const { data, error } = await supabase.from(table).select("status");
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+        
+        const stats = {
+            total: data.length,
+            NEW: 0,
+            CONTACTED: 0,
+            QUALIFIED: 0,
+            WON: 0,
+            LOST: 0
+        };
+        
+        data.forEach(lead => {
+            if (stats[lead.status] !== undefined) {
+                stats[lead.status]++;
+            }
+        });
+        
+        res.status(200).json({ stats });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 router.get("/:id", async (req, res) => {
     const { data, error } = await supabase.from(table).select("*").eq("id", req.params.id);
