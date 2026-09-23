@@ -1,6 +1,22 @@
 import React from 'react';
 import './Skeleton.css';
 
+export const TableSkeleton = () => (
+    <div className="skeleton-table-wrapper">
+        <div className="skeleton skeleton-table-header" style={{ borderRadius: '0' }}></div>
+        {[...Array(5)].map((_, i) => (
+            <div key={i} className="skeleton-table-row">
+                <div className="skeleton skeleton-table-cell" style={{ flex: 1.5 }}></div>
+                <div className="skeleton skeleton-table-cell" style={{ flex: 2 }}></div>
+                <div className="skeleton skeleton-table-cell" style={{ flex: 1 }}></div>
+                <div className="skeleton skeleton-table-cell" style={{ flex: 1 }}></div>
+                <div className="skeleton skeleton-table-cell" style={{ flex: 1 }}></div>
+                <div className="skeleton skeleton-table-cell" style={{ flex: 1 }}></div>
+            </div>
+        ))}
+    </div>
+);
+
 export const DashboardSkeleton = () => {
     return (
         <div className="dashboard-container" style={{ pointerEvents: 'none' }}>
@@ -25,19 +41,7 @@ export const DashboardSkeleton = () => {
             </div>
 
             {/* Table Skeleton */}
-            <div className="skeleton-table-wrapper">
-                <div className="skeleton skeleton-table-header" style={{ borderRadius: '0' }}></div>
-                {[...Array(5)].map((_, i) => (
-                    <div key={i} className="skeleton-table-row">
-                        <div className="skeleton skeleton-table-cell" style={{ flex: 1.5 }}></div>
-                        <div className="skeleton skeleton-table-cell" style={{ flex: 2 }}></div>
-                        <div className="skeleton skeleton-table-cell" style={{ flex: 1 }}></div>
-                        <div className="skeleton skeleton-table-cell" style={{ flex: 1 }}></div>
-                        <div className="skeleton skeleton-table-cell" style={{ flex: 1 }}></div>
-                        <div className="skeleton skeleton-table-cell" style={{ flex: 1 }}></div>
-                    </div>
-                ))}
-            </div>
+            <TableSkeleton />
         </div>
     );
 };

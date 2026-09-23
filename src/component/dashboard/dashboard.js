@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getLeads, getLeadStats, deleteLead } from "../apis/leadApi";
 import Table from "../utils/table/table";
 import ConfirmModal from "../utils/modal/ConfirmModal";
-import { DashboardSkeleton } from "../utils/skeleton/Skeleton";
+import { DashboardSkeleton, TableSkeleton } from "../utils/skeleton/Skeleton";
 import { useSnackbar } from "../utils/snackbar/SnackbarContext";
 import { useNavigate } from "react-router-dom";
 import './dashboard.css';
@@ -19,6 +19,7 @@ export default function Dashboard() {
         LOST: 0
     });
     const [loading, setLoading] = useState(true);
+    const [initialLoad, setInitialLoad] = useState(true);
     const [error, setError] = useState(null);
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -99,10 +100,12 @@ export default function Dashboard() {
             }
             
             setLoading(false);
+            setInitialLoad(false);
         } catch (err) {
             console.error("Error fetching dashboard data:", err);
             setError("Failed to fetch dashboard data");
             setLoading(false);
+            setInitialLoad(false);
         }
     }
 
@@ -133,7 +136,7 @@ export default function Dashboard() {
     const columns = ["name", "email", "phone", "source", "status", "created_at"];
     const actions = ["View", "Edit", "Delete"];
 
-    if (loading) {
+    if (initialLoad && loading) {
         return <DashboardSkeleton />;
     }
 
@@ -218,7 +221,9 @@ export default function Dashboard() {
 
             {/* Table Section */}
             <div className="table-wrapper">
-                {!error && leads.length > 0 ? (
+                {loading && !initialLoad ? (
+                    <TableSkeleton />
+                ) : !error && leads.length > 0 ? (
                     <Table 
                         data={leads} 
                         columns={columns} 
