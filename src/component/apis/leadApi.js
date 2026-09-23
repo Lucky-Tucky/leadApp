@@ -20,6 +20,11 @@ export const updateLead = async (id, data) => {
     return response.data;
 };
 
+export const deleteLead = async (id) => {
+    const response = await api.delete(`${path}/${id}`);
+    return response.data;
+};
+
 export const createLead = async (data) => {
     const response = await api.post(`${path}`, data);
     return response.data;

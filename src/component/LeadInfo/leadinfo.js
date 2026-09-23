@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getNotes, createNote } from '../apis/notesApi';
-import { getLeadById, createLead, updateLead } from '../apis/leadApi';
+import { getLeadById, createLead, updateLead, deleteLead } from '../apis/leadApi';
+import ConfirmModal from '../utils/modal/ConfirmModal';
+import { useSnackbar } from '../utils/snackbar/SnackbarContext';
 import './leadinfo.css';
 
 const LeadInfo = ({ mode: defaultMode = 'Edit' }) => {
+  const { showSnackbar } = useSnackbar();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,6 +32,11 @@ const LeadInfo = ({ mode: defaultMode = 'Edit' }) => {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
   const [loadingNotes, setLoadingNotes] = useState(false);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   useEffect(() => {
     if (isCreate) {
@@ -120,32 +128,65 @@ const LeadInfo = ({ mode: defaultMode = 'Edit' }) => {
     }
 
     try {
+      setIsSaving(true);
       if (isCreate) {
         await createLead(formData);
+        showSnackbar("Lead created successfully!", "success");
       } else {
         await updateLead(id, formData);
+        showSnackbar("Lead updated successfully!", "success");
       }
       navigate('/');
     } catch (err) {
       console.error("Failed to save lead:", err);
-      alert("Failed to save lead.");
+      showSnackbar("Failed to save lead.", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await deleteLead(id);
+      setIsDeleteModalOpen(false);
+      showSnackbar("Lead deleted successfully!", "success");
+      navigate('/');
+    } catch (err) {
+      console.error("Failed to delete lead:", err);
+      showSnackbar("Failed to delete lead.", "error");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const handleSaveNote = async () => {
     if (!newNote.trim()) {
-      alert("Note cannot be empty.");
+      showSnackbar("Note cannot be empty.", "error");
       return;
     }
     try {
+      setIsSavingNote(true);
       const res = await createNote(id, newNote);
       if (res.data) {
         setNotes([res.data, ...notes]);
         setNewNote('');
+        showSnackbar("Note saved successfully!", "success");
       }
     } catch (err) {
       console.error("Failed to save note:", err);
-      alert("Failed to save note.");
+      // Let the user know specifically about the duplicate note issue if it's the constraint error
+      if (err.response?.data?.error?.includes('duplicate key')) {
+        showSnackbar("Cannot save multiple notes due to database schema (notes_pkey constraint).", "error");
+      } else {
+        showSnackbar("Failed to save note.", "error");
+      }
+    } finally {
+      setIsSavingNote(false);
     }
   };
 
@@ -157,7 +198,14 @@ const LeadInfo = ({ mode: defaultMode = 'Edit' }) => {
     <div className="leadinfo-container">
       <div className="leadinfo-header">
         <h3>{isCreate ? 'Create New Lead' : isReadOnly ? 'Lead Details' : 'Edit Lead'}</h3>
-        <button className="btn-back" type="button" onClick={() => navigate('/')}>&larr; Back to Dashboard</button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {!isCreate && (
+            <button className="btn-back" style={{ color: '#ef4444', borderColor: '#ef4444' }} type="button" onClick={handleDeleteClick}>
+              Delete Lead
+            </button>
+          )}
+          <button className="btn-back" type="button" onClick={() => navigate('/')}>&larr; Back to Dashboard</button>
+        </div>
       </div>
 
       <div className="leadinfo-layout">
@@ -235,7 +283,9 @@ const LeadInfo = ({ mode: defaultMode = 'Edit' }) => {
 
             {!isReadOnly && (
               <div className="form-actions">
-                <button type="submit" className="btn-save">{isCreate ? 'Create Lead' : 'Save Changes'}</button>
+                <button type="submit" className="btn-save" disabled={isSaving}>
+                  {isSaving ? 'Saving...' : (isCreate ? 'Create Lead' : 'Save Changes')}
+                </button>
               </div>
             )}
           </form>
@@ -258,8 +308,8 @@ const LeadInfo = ({ mode: defaultMode = 'Edit' }) => {
                 onChange={(e) => setNewNote(e.target.value)}
                 rows="3"
               />
-              <button className="btn-save-note" type="button" onClick={handleSaveNote}>
-                Save Note
+              <button className="btn-save-note" type="button" onClick={handleSaveNote} disabled={isSavingNote}>
+                {isSavingNote ? 'Saving...' : 'Save Note'}
               </button>
             </div>
 
@@ -282,6 +332,17 @@ const LeadInfo = ({ mode: defaultMode = 'Edit' }) => {
           </div>
         )}
       </div>
+
+      <ConfirmModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Lead"
+        message={`Are you sure you want to delete ${lead?.name || 'this lead'}? This action cannot be undone.`}
+        confirmText="Delete"
+        isDestructive={true}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { getLeads, getLeadStats } from "../apis/leadApi";
+import { getLeads, getLeadStats, deleteLead } from "../apis/leadApi";
 import Table from "../utils/table/table";
+import ConfirmModal from "../utils/modal/ConfirmModal";
+import { useSnackbar } from "../utils/snackbar/SnackbarContext";
 import { useNavigate } from "react-router-dom";
 import './dashboard.css';
 
 export default function Dashboard() {
+    const { showSnackbar } = useSnackbar();
     const [leads, setLeads] = useState([]);
     const [stats, setStats] = useState({
         total: 0,
@@ -25,12 +28,35 @@ export default function Dashboard() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
 
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [leadToDelete, setLeadToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const handleActionClick = (action, rowData) => {
         if (action === 'Edit' || action === 'View') {
             navigate(`/lead/${rowData.id}`, { state: { mode: action } });
         } else if (action === 'Delete') {
-            console.log('Delete triggered on row:', rowData);
-            // Handle delete action here
+            setLeadToDelete(rowData);
+            setIsDeleteModalOpen(true);
+        }
+    };
+
+    const confirmDelete = async () => {
+        if (!leadToDelete) return;
+        
+        try {
+            setIsDeleting(true);
+            await deleteLead(leadToDelete.id);
+            setIsDeleteModalOpen(false);
+            setLeadToDelete(null);
+            // Refresh data
+            showSnackbar("Lead deleted successfully!", "success");
+            fetchDashboardData(currentPage, searchTerm, statusFilter);
+        } catch (err) {
+            console.error("Failed to delete lead:", err);
+            showSnackbar("Failed to delete lead.", "error");
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -229,6 +255,17 @@ export default function Dashboard() {
                     </div>
                 ) : null}
             </div>
+            
+            <ConfirmModal 
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Delete Lead"
+                message={`Are you sure you want to delete ${leadToDelete?.name}? This action cannot be undone.`}
+                confirmText="Delete"
+                isDestructive={true}
+                isLoading={isDeleting}
+            />
         </div>
     )
 }
