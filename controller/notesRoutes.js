@@ -6,7 +6,7 @@ router.post("/", async (req, res) => {
     const { note, lead_id } = req.body;
 
     const { data, error } = await supabase.from("notes").insert([
-        { note, id: lead_id }
+        { note, lead_id: lead_id }
     ]).select();
 
     if (error) {
@@ -18,7 +18,7 @@ router.post("/", async (req, res) => {
 router.get("/:lead_id", async (req, res) => {
     try {
         const { lead_id } = req.params;
-        let query = supabase.from("notes").select("*").eq("id", lead_id).order('created_at', { ascending: false });
+        let query = supabase.from("notes").select("*").eq("lead_id", lead_id).order('created_at', { ascending: false });
 
         const { data, error } = await query;
 
