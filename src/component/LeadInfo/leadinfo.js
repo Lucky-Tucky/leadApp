@@ -4,6 +4,7 @@ import { getNotes, createNote } from '../apis/notesApi';
 import { getLeadById, createLead, updateLead, deleteLead } from '../apis/leadApi';
 import ConfirmModal from '../utils/modal/ConfirmModal';
 import { useSnackbar } from '../utils/snackbar/SnackbarContext';
+import { LeadInfoSkeleton } from '../utils/skeleton/Skeleton';
 import './leadinfo.css';
 
 const LeadInfo = ({ mode: defaultMode = 'Edit' }) => {
@@ -191,7 +192,7 @@ const LeadInfo = ({ mode: defaultMode = 'Edit' }) => {
   };
 
   if (loading) {
-    return <div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>;
+    return <LeadInfoSkeleton />;
   }
 
   return (

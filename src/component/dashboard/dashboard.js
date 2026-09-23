@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getLeads, getLeadStats, deleteLead } from "../apis/leadApi";
 import Table from "../utils/table/table";
 import ConfirmModal from "../utils/modal/ConfirmModal";
+import { DashboardSkeleton } from "../utils/skeleton/Skeleton";
 import { useSnackbar } from "../utils/snackbar/SnackbarContext";
 import { useNavigate } from "react-router-dom";
 import './dashboard.css';
@@ -132,25 +133,9 @@ export default function Dashboard() {
     const columns = ["name", "email", "phone", "source", "status", "created_at"];
     const actions = ["View", "Edit", "Delete"];
 
-    const renderLoader = () => (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-            <div className="spinner"></div>
-            <style>{`
-                .spinner {
-                    border: 4px solid rgba(0, 0, 0, 0.1);
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 50%;
-                    border-left-color: #3b82f6;
-                    animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            `}</style>
-        </div>
-    );
+    if (loading) {
+        return <DashboardSkeleton />;
+    }
 
     return (
         <div className="dashboard-container">
@@ -233,9 +218,7 @@ export default function Dashboard() {
 
             {/* Table Section */}
             <div className="table-wrapper">
-                {loading ? (
-                    renderLoader()
-                ) : !error && leads.length > 0 ? (
+                {!error && leads.length > 0 ? (
                     <Table 
                         data={leads} 
                         columns={columns} 
