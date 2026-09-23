@@ -3,7 +3,7 @@ import api from '../Config/AxiosConfig';
 const path = "/notes";
 
 export const getNotes = async (lead_id) => {
-    const response = await api.get(`${path}/lead/${lead_id}`);
+    const response = await api.get(`${path}/${lead_id}`);
     return response.data;
 };
 

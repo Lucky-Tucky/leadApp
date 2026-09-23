@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
-import { getLeads, updateLead, createLead } from "../apis/leadApi";
+import { getLeads, getLeadStats } from "../apis/leadApi";
 import Table from "../utils/table/table";
 import { useNavigate } from "react-router-dom";
+import './dashboard.css';
 
 export default function Dashboard() {
     const [leads, setLeads] = useState([]);
+    const [stats, setStats] = useState({
+        total: 0,
+        NEW: 0,
+        CONTACTED: 0,
+        QUALIFIED: 0,
+        WON: 0,
+        LOST: 0
+    });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -29,11 +38,20 @@ export default function Dashboard() {
         navigate('/lead/new');
     };
 
-    const getLeadsList = async (page = 1) => {
+    const fetchDashboardData = async (page = 1, search = searchTerm, status = statusFilter) => {
         try {
             setLoading(true);
-            const data = await getLeads(page, 10, searchTerm, statusFilter);
-            const formattedLeads = (data.data || []).map(lead => {
+            
+            // Fetch stats in parallel with leads, but catch errors on stats so it doesn't break the table
+            const [leadsData, statsData] = await Promise.all([
+                getLeads(page, 10, search, status),
+                getLeadStats().catch(err => {
+                    console.error("Failed to fetch stats:", err);
+                    return null;
+                })
+            ]);
+
+            const formattedLeads = (leadsData.data || []).map(lead => {
                 const d = new Date(lead.created_at);
                 const day = String(d.getDate()).padStart(2, '0');
                 const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -44,36 +62,43 @@ export default function Dashboard() {
                     created_at: `${day}/${month}/${year}`
                 };
             });
+            
             setLeads(formattedLeads);
-            setCurrentPage(data.meta?.page || 1);
-            setTotalPages(data.meta?.totalPages || 1);
+            setCurrentPage(leadsData.meta?.page || 1);
+            setTotalPages(leadsData.meta?.totalPages || 1);
+            
+            if (statsData && statsData.stats) {
+                setStats(statsData.stats);
+            }
+            
             setLoading(false);
         } catch (err) {
-            console.error("Error fetching leads:", err);
-            setError("Failed to fetch leads");
+            console.error("Error fetching dashboard data:", err);
+            setError("Failed to fetch dashboard data");
             setLoading(false);
         }
     }
 
     useEffect(() => {
-        getLeadsList(currentPage);
-    }, [currentPage, statusFilter]);
+        fetchDashboardData(1, "", "");
+    }, []);
 
-    // Handle search manually or with a debounce if needed, but we'll use a simple button to avoid excessive calls
     const handleSearch = () => {
         setCurrentPage(1);
-        getLeadsList(1);
+        fetchDashboardData(1, searchTerm, statusFilter);
     };
 
     const handleReset = () => {
         setSearchTerm("");
         setStatusFilter("");
         setCurrentPage(1);
+        fetchDashboardData(1, "", "");
     };
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage);
+            fetchDashboardData(newPage, searchTerm, statusFilter);
         }
     };
 
@@ -102,33 +127,68 @@ export default function Dashboard() {
     );
 
     return (
-        <div style={{ padding: '20px' }}>
-            <h2>Leads Dashboard</h2>
-            {error && <p className="error-text">{error}</p>}
+        <div className="dashboard-container">
+            <div className="dashboard-header">
+                <h2 className="dashboard-title">Leads Dashboard</h2>
+            </div>
             
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <button 
-                    onClick={handleCreateNew} 
-                    style={{ padding: '8px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                >
-                    + Create Lead
+            {error && <p className="error-text" style={{ color: '#ef4444', marginBottom: '20px' }}>{error}</p>}
+            
+            {/* Stats Section */}
+            <div className="stats-grid">
+                    <div className="stat-card total">
+                        <span className="stat-title">Total Leads</span>
+                        <span className="stat-value">{stats.total}</span>
+                    </div>
+                    <div className="stat-card new">
+                        <span className="stat-title">New</span>
+                        <span className="stat-value">{stats.NEW || 0}</span>
+                    </div>
+                    <div className="stat-card contacted">
+                        <span className="stat-title">Contacted</span>
+                        <span className="stat-value">{stats.CONTACTED || 0}</span>
+                    </div>
+                    <div className="stat-card qualified">
+                        <span className="stat-title">Qualified</span>
+                        <span className="stat-value">{stats.QUALIFIED || 0}</span>
+                    </div>
+                    <div className="stat-card won">
+                        <span className="stat-title">Won</span>
+                        <span className="stat-value">{stats.WON || 0}</span>
+                    </div>
+                    <div className="stat-card lost">
+                        <span className="stat-title">Lost</span>
+                        <span className="stat-value">{stats.LOST || 0}</span>
+                    </div>
+                </div>
+
+            {/* Filters Section */}
+            <div className="filters-section">
+                <button className="btn-create" onClick={handleCreateNew}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Create Lead
                 </button>
-                <div style={{ width: '1px', height: '24px', background: '#cbd5e1', margin: '0 5px' }}></div>
+                
+                <div className="filter-divider"></div>
+                
                 <input 
                     type="text" 
+                    className="search-input"
                     placeholder="Search by name..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
                 />
+                
                 <select 
+                    className="status-select"
                     value={statusFilter}
                     onChange={(e) => {
-                        setStatusFilter(e.target.value);
+                        const val = e.target.value;
+                        setStatusFilter(val);
                         setCurrentPage(1);
+                        fetchDashboardData(1, searchTerm, val);
                     }}
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
                 >
                     <option value="">All Statuses</option>
                     <option value="NEW">NEW</option>
@@ -137,27 +197,38 @@ export default function Dashboard() {
                     <option value="WON">WON</option>
                     <option value="LOST">LOST</option>
                 </select>
-                <button onClick={handleSearch} style={{ padding: '8px 12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Search</button>
+                
+                <button className="btn-primary" onClick={handleSearch}>Search</button>
+                
                 {(searchTerm || statusFilter) && (
-                    <button onClick={handleReset} style={{ padding: '8px 12px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer' }}>Reset</button>
+                    <button className="btn-secondary" onClick={handleReset}>Reset Filters</button>
                 )}
             </div>
 
-            {loading ? (
-                renderLoader()
-            ) : !error && leads.length > 0 ? (
-                <Table 
-                    data={leads} 
-                    columns={columns} 
-                    actions={actions} 
-                    onActionClick={handleActionClick}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                />
-            ) : !error && leads.length === 0 ? (
-                <p style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No leads found matching your criteria.</p>
-            ) : null}
+            {/* Table Section */}
+            <div className="table-wrapper">
+                {loading ? (
+                    renderLoader()
+                ) : !error && leads.length > 0 ? (
+                    <Table 
+                        data={leads} 
+                        columns={columns} 
+                        actions={actions} 
+                        onActionClick={handleActionClick}
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                ) : !error && leads.length === 0 ? (
+                    <div className="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <p>No leads found matching your criteria.</p>
+                        {(searchTerm || statusFilter) && (
+                            <button className="btn-secondary" onClick={handleReset}>Clear Filters</button>
+                        )}
+                    </div>
+                ) : null}
+            </div>
         </div>
     )
 }

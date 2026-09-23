@@ -24,3 +24,8 @@ export const createLead = async (data) => {
     const response = await api.post(`${path}`, data);
     return response.data;
 };
+
+export const getLeadStats = async () => {
+    const response = await api.get(`${path}/stats`);
+    return response.data;
+};

@@ -78,25 +78,23 @@ const Table = ({ data, columns, actions, onActionClick, currentPage, totalPages,
           ))}
         </tbody>
       </table>
-      {totalPages > 1 && (
-        <div className="table-pagination">
-          <button 
-            className="pagination-btn" 
-            disabled={currentPage <= 1} 
-            onClick={() => onPageChange && onPageChange(currentPage - 1)}
-          >
-            Previous
-          </button>
-          <span className="pagination-info">Page {currentPage} of {totalPages}</span>
-          <button 
-            className="pagination-btn" 
-            disabled={currentPage >= totalPages} 
-            onClick={() => onPageChange && onPageChange(currentPage + 1)}
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <div className="table-pagination">
+        <button 
+          className="pagination-btn" 
+          disabled={currentPage <= 1} 
+          onClick={() => onPageChange && onPageChange(currentPage - 1)}
+        >
+          Previous
+        </button>
+        <span className="pagination-info">Page {currentPage} of {totalPages}</span>
+        <button 
+          className="pagination-btn" 
+          disabled={currentPage >= totalPages} 
+          onClick={() => onPageChange && onPageChange(currentPage + 1)}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };

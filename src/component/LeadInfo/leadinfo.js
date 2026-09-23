@@ -111,7 +111,8 @@ const LeadInfo = ({ mode: defaultMode = 'Edit' }) => {
     // Auto-create note on status change (only if editing an existing lead)
     if (!isCreate && lead && lead.status !== formData.status) {
       try {
-        const autoNote = `Status changed from ${lead.status || 'None'} to ${formData.status}`;
+        const dateStr = new Date().toLocaleString();
+        const autoNote = `[System Update] Status changed from ${lead.status || 'None'} to ${formData.status} on ${dateStr}`;
         await createNote(id, autoNote);
       } catch (err) {
         console.error("Failed to auto-save status note:", err);
