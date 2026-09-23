@@ -15,14 +15,10 @@ router.post("/", async (req, res) => {
     res.status(201).json({ data: data[0] });
 });
 
-router.get("/", async (req, res) => {
+router.get("/lead/:lead_id", async (req, res) => {
     try {
-        const { lead_id } = req.query;
-        let query = supabase.from("notes").select("*").order('created_at', { ascending: false });
-
-        if (lead_id) {
-            query = query.eq("lead_id", lead_id);
-        }
+        const { lead_id } = req.params;
+        let query = supabase.from("notes").select("*").eq("lead_id", lead_id).order('created_at', { ascending: false });
 
         const { data, error } = await query;
 

@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const { supabase } = require("../Config/DbConfig");
 
-
+const table = "Lead";
 router.get("/", async (req, res) => {
     try {
         let { page, limit, search, status } = req.query;
@@ -11,7 +11,7 @@ router.get("/", async (req, res) => {
         const from = (page - 1) * limit;
         const to = from + limit - 1;
 
-        let query = supabase.from("leads").select("*", { count: "exact" });
+        let query = supabase.from(table).select("*", { count: "exact" });
 
         if (search) {
             query = query.ilike("name", `%${search}%`);
@@ -42,7 +42,7 @@ router.get("/", async (req, res) => {
 
 
 router.get("/:id", async (req, res) => {
-    const { data, error } = await supabase.from("leads").select("*").eq("id", req.params.id);
+    const { data, error } = await supabase.from(table).select("*").eq("id", req.params.id);
     if (error) {
         return res.status(500).json({ error: error.message });
     }
@@ -59,9 +59,9 @@ router.post("/", async (req, res) => {
         status,
     } = req.body;
 
-    const { data, error } = await supabase.from("leads").insert([
+    const { data, error } = await supabase.from(table).insert([
         { name, email, phone, source, status }
-    ]);
+    ]).select();
     if (error) {
         return res.status(500).json({ error: error.message });
     }
@@ -70,7 +70,7 @@ router.post("/", async (req, res) => {
 
 router.patch("/:id", async (req, res) => {
     const { name, email, phone, source, status } = req.body;
-    
+
     // Only include provided fields
     const updateData = {};
     if (name !== undefined) updateData.name = name;
@@ -80,7 +80,7 @@ router.patch("/:id", async (req, res) => {
     if (status !== undefined) updateData.status = status;
 
     const { data, error } = await supabase
-        .from("leads")
+        .from(table)
         .update(updateData)
         .eq("id", req.params.id)
         .select();
@@ -93,7 +93,7 @@ router.patch("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
     const { data, error } = await supabase
-        .from("leads")
+        .from(table)
         .delete()
         .eq("id", req.params.id)
         .select();
