@@ -1,5 +1,5 @@
 # Lead Tracking App\
-**Link - https://lead-app-frontend-9l9t-nu.vercel.app/
+Deployed Link - https://lead-app-frontend-9l9t-nu.vercel.app/
 
 A full-stack application built to manage, track, and analyze leads efficiently. The system provides a seamless interface to handle the entire lifecycle of a lead—from initial contact to final conversion status.
 
