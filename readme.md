@@ -34,24 +34,26 @@ Follow these steps to run the application locally:
 - A Supabase account and project
 
 ### 2. Backend Setup
-1. Navigate to the backend directory: `cd backend`
-2. Install dependencies: `npm install`
-3. Create a `.env` file in the `backend` folder with your Supabase credentials:
+1. Navigate to the backend branch: `master`
+2. clone the branch and checkout to `master` branch
+3. Install dependencies: `npm install`
+4. Create a `.env` file in the `backend` folder with your Supabase credentials:
    ```env
    SUPABASE_URL=your_supabase_project_url
    SUPABASE_KEY=your_supabase_anon_or_service_key
    PORT=5000
    ```
-4. Start the backend server: `npm start` (Runs on `http://localhost:5000`)
+5. Start the backend server: `npm start` (Runs on `http://localhost:5000`)
 
 ### 3. Frontend Setup
-1. Navigate to the frontend directory: `cd frontend`
-2. Install dependencies: `npm install`
-3. Create a `.env` file in the `frontend` folder and link it to your local backend:
+1. Navigate to the frontend branch: `master-frontend`
+2. clone the branch and checkout to `master-frontend` branch
+3. Install dependencies: `npm install`
+4. Create a `.env` file in the `frontend` folder and link it to your local backend:
    ```env
    REACT_APP_BASE_URL=http://localhost:5000/api
    ```
-4. Start the React development server: `npm start` (Runs on `http://localhost:3000`)
+5. Start the React development server: `npm start` (Runs on `http://localhost:3000`)
 
 ---
 
